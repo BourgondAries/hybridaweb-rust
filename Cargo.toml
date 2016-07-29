@@ -9,11 +9,16 @@ iron = "0.4.0"
 isatty = "0.1.1"
 itertools = "0.4.16"
 lazy_static = "0.2.1"
+mount = "0.2.1"
+# mount = { path = "../mount" }
 postgres = "0.11.9"
+router = "0.2.0"
 scopeguard = "0.2.0"
 slog = "0.6.0"
 slog-json = "0.6.0"
 slog-term = "0.6.0"
+staticfile = "0.3.0"
+#staticfile = { path = "../staticfile" }
 time = "0.1.35"
 
 [features]
