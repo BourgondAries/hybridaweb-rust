@@ -1,12 +1,15 @@
 #![cfg_attr(feature = "dev", allow(unstable_features))]
 #![cfg_attr(feature = "dev", feature(plugin))]
 #![cfg_attr(feature = "dev", plugin(clippy))]
+#![feature(plugin)]
+#![plugin(maud_macros)]
 
 extern crate iron;
 extern crate isatty;
 extern crate itertools;
 #[macro_use]
 extern crate lazy_static;
+extern crate maud;
 extern crate mount;
 extern crate postgres;
 #[macro_use]

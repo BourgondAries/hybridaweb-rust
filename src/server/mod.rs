@@ -36,8 +36,8 @@ pub fn enter() {
 
 	let mut mount = Mount::new();
 	mount
-		.mount("/dl/", Static::new(Path::new("target/debug/")))
 		.mount("/", chain)
+		.mount("/dl/", Static::new(Path::new("dl/")))
 	;
 
 	mainlog.trace("Starting server", b![]);
@@ -63,7 +63,7 @@ impl BeforeMiddleware for Log {
 			*count = count.wrapping_add(1);
 			*count
 		};
-		ins!(req, Log, Arc::new(self.0.new(o!["reqid" => reqid])));
+		ins!(req, Log: Arc::new(self.0.new(o!["reqid" => reqid])));
 		elog!(req).trace("Beginning request", b![]);
 		Ok(())
 	}
@@ -101,6 +101,12 @@ impl Handler for ResponseTimeHandler {
 fn hello_world(req: &mut Request) -> IronResult<Response> {
 	elog!(req).info("", b!["req" => format!("{:?}", req)]);
 	sleep(Duration::new(0, 1000*1000*200));
+	let name = "Lyra";
+	let mut buffer = String::new();
+	html!(buffer, {
+		p { "Hi, " ^name "!" }
+	}).unwrap();
+	elog!(req).info("", b!["buf" => buffer]);
 	Ok(Response::with((status::Ok, "Hello World")))
 }
 

@@ -3,7 +3,7 @@ macro_rules! elog {
 }
 
 macro_rules! ins {
-	($i:ident, $t:ty, $e:expr) => {{
+	($i:ident, $t:ty: $e:expr) => {{
 		$i.extensions.insert::<$t>($e)
 	}};
 }
