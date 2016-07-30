@@ -19,6 +19,35 @@ use std::thread::sleep;
 use time::precise_time_ns;
 
 pub fn enter() {
+
+	macro_rules! req {
+		($($i:ident $e:expr, $n:ident : $r:pat => $b:expr),*) => ({
+			$(
+				let $n = |req: &mut Request| -> IronResult<Response> {
+					match req {
+						$r => $b,
+					}
+				};
+			)*
+			router! {
+				$(
+					$i $e => $n
+				),*
+			}
+		});
+	}
+
+	let router = req! {
+		get "/", myfun: req => {
+			elog!(req).info("index route", b![]);
+			Ok(Response::with((status::Ok, "Hello World")))
+		},
+		get "/other", kek: req => {
+			elog!(req).info("other route", b![]);
+			Ok(Response::with((status::Ok, "Hello World")))
+		}
+	};
+
 	let log = setup_logger(get_loglevel("SLOG_LEVEL"));
 	let mainlog = log.new(o!["reqid" => "main"]);
 	let worklog = log.new(o![]);
@@ -26,9 +55,11 @@ pub fn enter() {
 	defer!(mainlog.trace("Clean exit", b![]));
 	mainlog.trace("Constructing middleware", b![]);
 
+	/*
 	let router = router! {
 		get  ""       => hello_world,
 	};
+	*/
 
 	let mut chain = Chain::new(router);
 	chain.link_before(Log::new(worklog));
