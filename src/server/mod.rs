@@ -1,3 +1,5 @@
+use iron::mime::*;
+use iron::modifier::Modifier;
 use iron::prelude::*;
 use iron::{BeforeMiddleware, AfterMiddleware, AroundMiddleware, Handler, typemap, status};
 use isatty::{stderr_isatty};
@@ -18,9 +20,16 @@ use std::time::Duration;
 use std::thread::sleep;
 use time::precise_time_ns;
 
+fn msleep(ms: u64) {
+	sleep(Duration::from_millis(ms));
+}
+
 pub fn enter() {
 
 	macro_rules! req {
+		($($i:ident $e:expr, $n:ident : $r:pat => $b:expr),*,) => ({
+			req!($($i $e, $n : $r => $b),*)
+		});
 		($($i:ident $e:expr, $n:ident : $r:pat => $b:expr),*) => ({
 			$(
 				let $n = |req: &mut Request| -> IronResult<Response> {
@@ -39,13 +48,22 @@ pub fn enter() {
 
 	let router = req! {
 		get "/", myfun: req => {
-			elog!(req).info("index route", b![]);
-			Ok(Response::with((status::Ok, "Hello World")))
-		},
-		get "/other", kek: req => {
+			elog!(req).info("", b!["req" => format!("{:?}", req)]);
+			msleep(500);
+			let name = "Lyra";
+			let mut buffer = String::new();
+			html!(buffer, {
+				p { "Hi, " ^name "!" }
+			}).unwrap();
+			elog!(req).info("", b!["buf" => buffer]);
+			Ok(Response::with((status::Ok, buffer)))
+		}, get "/other", kek: req => {
 			elog!(req).info("other route", b![]);
 			Ok(Response::with((status::Ok, "Hello World")))
-		}
+		}, get "/*", some: req => {
+			elog!(req).info("DANGER", b![]);
+			Ok(Response::with((status::NotFound, "Something happen")))
+		},
 	};
 
 	let log = setup_logger(get_loglevel("SLOG_LEVEL"));
@@ -55,15 +73,10 @@ pub fn enter() {
 	defer!(mainlog.trace("Clean exit", b![]));
 	mainlog.trace("Constructing middleware", b![]);
 
-	/*
-	let router = router! {
-		get  ""       => hello_world,
-	};
-	*/
-
 	let mut chain = Chain::new(router);
 	chain.link_before(Log::new(worklog));
 	chain.link_around(ResponseTime);
+	chain.link_after(Html);
 
 	let mut mount = Mount::new();
 	mount
@@ -75,6 +88,15 @@ pub fn enter() {
 	let _ = Iron::new(mount).http("localhost:3000").map_err(|x| {
 		mainlog.error("Unable to start server", b!["error" => format!("{:?}", x)]);
 	});
+}
+
+struct Html;
+impl AfterMiddleware for Html {
+	fn after(&self, req: &mut Request, mut res: Response) -> IronResult<Response> {
+		elog!(req).trace("Setting MIME to html", b![]);
+		(Mime(TopLevel::Text, SubLevel::Html, vec![])).modify(&mut res);
+		Ok(res)
+	}
 }
 
 struct Log(Arc<Logger>, Mutex<u64>);
@@ -127,18 +149,6 @@ impl Handler for ResponseTimeHandler {
 
 		response
 	}
-}
-
-fn hello_world(req: &mut Request) -> IronResult<Response> {
-	elog!(req).info("", b!["req" => format!("{:?}", req)]);
-	sleep(Duration::new(0, 1000*1000*200));
-	let name = "Lyra";
-	let mut buffer = String::new();
-	html!(buffer, {
-		p { "Hi, " ^name "!" }
-	}).unwrap();
-	elog!(req).info("", b!["buf" => buffer]);
-	Ok(Response::with((status::Ok, "Hello World")))
 }
 
 fn get_loglevel(env: &str) -> Level {
