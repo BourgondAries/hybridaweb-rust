@@ -20,6 +20,8 @@ use std::time::Duration;
 use std::thread::sleep;
 use time::precise_time_ns;
 
+mod views;
+
 fn msleep(ms: u64) {
 	sleep(Duration::from_millis(ms));
 }
@@ -49,7 +51,6 @@ pub fn enter() {
 	let router = req! {
 
 		get "/", myfun: req => {
-			elog!(req).info("", b!["req" => format!("{:?}", req)]);
 			msleep(500);
 			let name = "Lyra";
 			let mut buffer = String::new();
@@ -57,7 +58,7 @@ pub fn enter() {
 				p { "Hi, " ^name "!" }
 			}).unwrap();
 			elog!(req).info("", b!["buf" => buffer]);
-			Ok(Response::with((status::Ok, buffer)))
+			Ok(Response::with((status::Ok, views::index(elog!(req)))))
 		},
 
 		get "/other", kek: req => {
@@ -66,9 +67,10 @@ pub fn enter() {
 		},
 
 		get "/*", some: req => {
-			elog!(req).info("DANGER", b![]);
+			elog!(req).warn("Unknown route", b!["req" => format!("{:?}", req)]);
 			Ok(Response::with((status::NotFound, "Something happen")))
 		},
+
 	};
 
 	let log = setup_logger(get_loglevel("SLOG_LEVEL"));
