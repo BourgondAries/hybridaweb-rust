@@ -74,6 +74,16 @@ to make the controllers small.
 	}
 
 I like the idea, as it takes care of some boilerplate.
+This currently works for only one route, which should be fine.
+Other things to do is allow codes like /u/ in mount, which
+automatically logs you in (by checking a cookie).
+
+Another mount is /dl/, which downloads a static file.
+It's really nice not having any user stuff or db connection
+here.
+
+Other I now need to implement backreferences in addition to
+header code generation.
 */
 
 fn main() {
