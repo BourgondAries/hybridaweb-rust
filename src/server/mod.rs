@@ -1,7 +1,9 @@
 use iron::mime::*;
 use iron::modifier::Modifier;
+use iron::headers;
+use iron::modifiers::Header;
 use iron::prelude::*;
-use iron::{BeforeMiddleware, AfterMiddleware, AroundMiddleware, Handler, typemap, status};
+use iron::{BeforeMiddleware, AfterMiddleware, AroundMiddleware, Handler, typemap, status, Url, modifiers};
 use isatty::{stderr_isatty};
 // use itertools::Itertools;
 use mount::Mount;
@@ -28,47 +30,23 @@ fn msleep(ms: u64) {
 
 pub fn enter() {
 
-	macro_rules! req {
-		($($i:ident $e:expr, $n:ident : $r:pat => $b:expr),*,) => ({
-			req!($($i $e, $n : $r => $b),*)
-		});
-		($($i:ident $e:expr, $n:ident : $r:pat => $b:expr),*) => ({
-			$(
-				let $n = |req: &mut Request| -> IronResult<Response> {
-					match req {
-						$r => $b,
-					}
-				};
-			)*
-			router! {
-				$(
-					$i $e => $n
-				),*
-			}
-		});
-	}
-
 	let router = req! {
 
 		get "/", myfun: req => {
-			msleep(500);
-			let name = "Lyra";
-			let mut buffer = String::new();
-			html!(buffer, {
-				p { "Hi, " ^name "!" }
-			}).unwrap();
-			elog!(req).info("", b!["buf" => buffer]);
+			msleep(1000);
 			Ok(Response::with((status::Ok, views::index(elog!(req)))))
 		},
 
 		get "/other", kek: req => {
 			elog!(req).info("other route", b![]);
+			msleep(1000);
 			Ok(Response::with((status::Ok, "Hello World")))
 		},
 
 		get "/*", some: req => {
+			msleep(1000);
 			elog!(req).warn("Unknown route", b!["req" => format!("{:?}", req)]);
-			Ok(Response::with((status::NotFound, "Something happen")))
+			Ok(Response::with((status::Found, Header(headers::Location("/other".to_owned())))))
 		},
 
 	};
@@ -128,6 +106,24 @@ impl BeforeMiddleware for Log {
 		Ok(())
 	}
 }
+
+struct Head;
+impl typemap::Key for Head { type Value = String; }
+impl BeforeMiddleware for Head {
+	fn before(&self, req: &mut Request) -> IronResult<()> {
+		let mut buffer = String::new();
+		html! {
+			buffer,
+			head {
+				meta charset="UTF-8" /
+			}
+		};
+		ins!(req, Head: buffer);
+		Ok(())
+	}
+}
+
+struct BodyWrap;
 
 struct ResponseTime;
 impl AroundMiddleware for ResponseTime {

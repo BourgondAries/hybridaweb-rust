@@ -23,3 +23,23 @@ macro_rules! matchfor {
 		}
 	}};
 }
+macro_rules! req {
+	($($i:ident $e:expr, $n:ident : $r:pat => $b:expr),*,) => ({
+		req!($($i $e, $n : $r => $b),*)
+	});
+	($($i:ident $e:expr, $n:ident : $r:pat => $b:expr),*) => ({
+		$(
+			let $n = |req: &mut Request| -> IronResult<Response> {
+				match req {
+					$r => $b,
+				}
+			};
+		)*
+		router! {
+			$(
+				$i $e => $n
+			),*
+		}
+	});
+}
+
