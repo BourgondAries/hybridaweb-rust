@@ -47,6 +47,7 @@ pub fn enter() {
 	}
 
 	let router = req! {
+
 		get "/", myfun: req => {
 			elog!(req).info("", b!["req" => format!("{:?}", req)]);
 			msleep(500);
@@ -57,10 +58,14 @@ pub fn enter() {
 			}).unwrap();
 			elog!(req).info("", b!["buf" => buffer]);
 			Ok(Response::with((status::Ok, buffer)))
-		}, get "/other", kek: req => {
+		},
+
+		get "/other", kek: req => {
 			elog!(req).info("other route", b![]);
 			Ok(Response::with((status::Ok, "Hello World")))
-		}, get "/*", some: req => {
+		},
+
+		get "/*", some: req => {
 			elog!(req).info("DANGER", b![]);
 			Ok(Response::with((status::NotFound, "Something happen")))
 		},
