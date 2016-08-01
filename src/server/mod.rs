@@ -18,22 +18,27 @@ pub fn enter() {
 
 	let router = req! {
 
-		get "/", myfun: req => {
+		get "/", myfun: (req, _) => {
 			msleep(1000);
 			Ok(Response::with((status::Ok, views::index(req.log()))))
 		},
 
-		get "/other/:test", kek: req => {
+		get "/other/:test", kek: (req, _) => {
 			elog!(req).info("other route", b![]);
 			msleep(1000);
 			req.log().trace("cool", b!["req" => format!("{:?}", req.extensions.get::<Router>().unwrap().find("test"))]);
 			Ok(Response::with((status::Ok, "Hello World")))
 		},
 
-		get "/*", some: req => {
+		get "/*", some: (req, _) => {
 			msleep(1000);
 			elog!(req).warn("Unknown route", b!["req" => format!("{:?}", req)]);
-			Ok(Response::with((status::Found, Header(headers::Location("/other".to_owned())))))
+			Ok(Response::with((status::Found, Header(
+				headers::Location(
+					"other".to_owned()
+
+				)
+			))))
 		},
 
 	};

@@ -30,7 +30,7 @@ macro_rules! req {
 	($($i:ident $e:expr, $n:ident : $r:pat => $b:expr),*) => ({
 		$(
 			let $n = |req: &mut Request| -> IronResult<Response> {
-				match req {
+				match (req, 1) {
 					$r => $b,
 				}
 			};
