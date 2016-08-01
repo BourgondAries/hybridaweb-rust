@@ -1,31 +1,17 @@
-use iron::mime::*;
-use iron::modifier::Modifier;
-use iron::headers;
-use iron::modifiers::Header;
-use iron::prelude::*;
-use iron::{BeforeMiddleware, AfterMiddleware, AroundMiddleware, Handler, typemap, status, Url, modifiers};
-use isatty::{stderr_isatty};
-// use itertools::Itertools;
-use mount::Mount;
-use postgres::{Connection, SslMode};
-// use scopeguard::guard;
-use slog::*;
-use slog_json;
-use slog_term;
-// use std::collections::BTreeMap;
-use staticfile::Static;
-use std;
-use std::env;
-use std::path::Path;
-use std::sync::{Arc, Mutex};
-use std::time::Duration;
-use std::thread::sleep;
-use time::precise_time_ns;
-
+use include::*;
 mod views;
 
 fn msleep(ms: u64) {
 	sleep(Duration::from_millis(ms));
+}
+
+trait Db {
+	fn log(&self) -> &Arc<Logger>;
+}
+impl<'a, 'b> Db for Request<'a, 'b> {
+	fn log(&self) -> &Arc<Logger> {
+		self.extensions.get::<Log>().unwrap()
+	}
 }
 
 pub fn enter() {
@@ -34,12 +20,13 @@ pub fn enter() {
 
 		get "/", myfun: req => {
 			msleep(1000);
-			Ok(Response::with((status::Ok, views::index(elog!(req)))))
+			Ok(Response::with((status::Ok, views::index(req.log()))))
 		},
 
-		get "/other", kek: req => {
+		get "/other/:test", kek: req => {
 			elog!(req).info("other route", b![]);
 			msleep(1000);
+			req.log().trace("cool", b!["req" => format!("{:?}", req.extensions.get::<Router>().unwrap().find("test"))]);
 			Ok(Response::with((status::Ok, "Hello World")))
 		},
 
