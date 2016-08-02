@@ -28,22 +28,22 @@ macro_rules! req {
 		req!($($i $e, $n : $r => $b),*)
 	});
 	($($i:ident $e:expr, $n:ident : $r:pat => $b:expr),*) => ({
-		struct Etuor {
+		struct RevRoute {
 			$(
 				$n: &'static str
 			),*
 		}
-		struct Etuors(Arc<Etuor>);
-		impl typemap::Key for Etuors {
-			type Value = Arc<Etuor>;
+		struct RevRoutes(Arc<RevRoute>);
+		impl typemap::Key for RevRoutes {
+			type Value = Arc<RevRoute>;
 		}
-		impl BeforeMiddleware for Etuors {
+		impl BeforeMiddleware for RevRoutes {
 			fn before(&self, req: &mut Request) -> IronResult<()> {
-				ins!(req, Etuors: self.0.clone());
+				ins!(req, RevRoutes: self.0.clone());
 				Ok(())
 			}
 		}
-		let nak = Etuors(Arc::new(Etuor {
+		let nak = RevRoutes(Arc::new(RevRoute {
 			$(
 				$n: $e
 			),*
@@ -55,7 +55,7 @@ macro_rules! req {
 					req.ext::<Log>().clone()
 				};
 				let nak = {
-					req.ext::<Etuors>().clone()
+					req.ext::<RevRoutes>().clone()
 				};
 				match match (req, log, nak) {
 					$r => $b,

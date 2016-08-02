@@ -34,20 +34,19 @@ pub fn enter() {
 
 	let router = req! {
 
-		get "/", myfun: (req, log, nak) => {
+		get "/", myfun: (_, log, nak) => {
 			msleep(1000);
 			trace![log, "Nice", "linkback" => nak.kek];
 			Re::Html(views::index(&*log))
 		},
 
-		get "/other/:test", kek: (req, log, nak) => {
-			trace![elog!(req), "other route"];
+		get "/other/:test", kek: (req, log, _) => {
 			msleep(1000);
-			trace![log, "cool", "req" => format!("{:?}", req.extensions.get::<Router>().unwrap().find("test"))];
+			trace![log, "cool", "req" => format!("{:?}", req.ext::<Router>().find("test"))];
 			Re::Html("Hello World".to_owned())
 		},
 
-		get "/*", some: (req, log, nak) => {
+		get "/*", some: (req, log, _) => {
 			msleep(1000);
 			warn![log, "Unknown route", "req" => format!("{:?}", req)];
 			Re::Redirect("/other/someval".to_owned())
