@@ -179,32 +179,32 @@ fn get_loglevel(env: &str) -> Level {
 }
 
 fn setup_logger(level: Level) -> Logger {
+	let automatic = o!["line" => {
+			|rec: &RecordInfo| {
+				rec.line()
+			}
+		}, "mod" => {
+			|rec: &RecordInfo| {
+				rec.module().to_owned()
+			}
+		}];
+
 	if stderr_isatty() {
-		let log = slog_term::async_stderr()
-		.into_logger(o!["line" => {
-				|rec: &RecordInfo| {
-					rec.line()
-				}
-			}, "mod" => {
-				|rec: &RecordInfo| {
-					rec.module().to_owned()
-				}
-			}]);
+		let log = drain::filter_level(
+			level,
+			slog_term::async_stderr()
+		)
+		.into_logger(automatic);
 		trace!(log, "Using drain", "out" => "stderr", "stderr_isatty" => stderr_isatty(), "type" => "term");
 		log
 	} else {
-		let log = drain::stream(
-				std::io::stderr(),
-				slog_json::new()
-			).into_logger(o!["line" => {
-				|rec: &RecordInfo| {
-					rec.line()
-				}
-			}, "mod" => {
-				|rec: &RecordInfo| {
-					rec.module().to_owned()
-				}
-			}]);
+		let log = drain::filter_level(
+				level,
+				drain::async_stream(
+					std::io::stderr(),
+					slog_json::new()
+				)
+			).into_logger(automatic);
 		trace!(log, "Using drain", "out" => "stderr", "stderr_isatty" => stderr_isatty(), "type" => "json");
 		log
 	}
