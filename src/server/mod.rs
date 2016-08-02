@@ -25,33 +25,32 @@ impl<'a, 'b> Ext<'a> for Request<'a, 'b> {
 	}
 }
 
+pub enum Re {
+	Html(String),
+	Redirect(String)
+}
+
 pub fn enter() {
 
 	let router = req! {
 
-		get "/", myfun: req => {
+		get "/", myfun: (req, log) => {
 			msleep(1000);
-			trace![req.ext::<Log>(), "Nice", "mod" => "over"];
-			views::index(req.ext::<Log>())
+			trace![log, "Nice", "mod" => "over"];
+			Re::Html(views::index(req.ext::<Log>()))
 		},
 
-		get "/other/:test", kek: req => {
+		get "/other/:test", kek: (req, log) => {
 			trace![elog!(req), "other route"];
 			msleep(1000);
-			trace![req.log(), "cool", "req" => format!("{:?}", req.extensions.get::<Router>().unwrap().find("test"))];
-			"Hello World"
+			trace![log, "cool", "req" => format!("{:?}", req.extensions.get::<Router>().unwrap().find("test"))];
+			Re::Html("Hello World".to_owned())
 		},
 
-		get "/*", some: req => {
+		get "/*", some: (req, log) => {
 			msleep(1000);
-			warn![elog!(req), "Unknown route", "req" => format!("{:?}", req)];
-			/*Ok(Response::with((status::Found, Header(
-				headers::Location(
-					"other".to_owned()
-				)
-			))))
-			*/
-			"Well okay"
+			warn![log, "Unknown route", "req" => format!("{:?}", req)];
+			Re::Redirect("/other/someval".to_owned())
 		},
 
 	};

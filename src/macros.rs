@@ -30,11 +30,15 @@ macro_rules! req {
 	($($i:ident $e:expr, $n:ident : $r:pat => $b:expr),*) => ({
 		$(
 			let $n = |req: &mut Request| -> IronResult<Response> {
-				let ret_val =
-					match req {
-						$r => $b,
-					};
-				Ok(Response::with((status::Ok, ret_val)))
+				let log = {
+					req.ext::<Log>().clone()
+				};
+				match match (req, log) {
+					$r => $b,
+				} {
+					Re::Html(out) => Ok(Response::with((status::Ok, out))),
+					Re::Redirect(out) => Ok(Response::with((status::Found, Header(headers::Location(out))))),
+				}
 			};
 		)*
 		router! {
