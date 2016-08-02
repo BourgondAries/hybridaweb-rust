@@ -32,12 +32,12 @@ pub enum Re {
 
 pub fn enter() {
 
-	let (router, nak) = req! {
+	let router = req! {
 
 		get "/", myfun: (req, log, nak) => {
 			msleep(1000);
 			trace![log, "Nice", "linkback" => nak.kek];
-			Re::Html(views::index(req.ext::<Log>()))
+			Re::Html(views::index(&*log))
 		},
 
 		get "/other/:test", kek: (req, log, nak) => {
@@ -62,9 +62,8 @@ pub fn enter() {
 	defer!(trace![mainlog, "Clean exit"]);
 	trace![mainlog, "Constructing middleware"];
 
-	let mut chain = Chain::new(router);
+	let mut chain = router;
 	chain.link_before(Log::new(worklog));
-	chain.link_before(nak);
 	chain.link_around(ResponseTime);
 	chain.link_after(Html);
 

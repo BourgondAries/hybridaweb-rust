@@ -66,11 +66,13 @@ macro_rules! req {
 			}
 		};
 		)*
-		(router! {
+		let mut chain = Chain::new(router! {
 			$(
 				$i $e => $n
 			),*
-		}, nak)
+		});
+		chain.link_before(nak);
+		chain
 	});
 }
 
