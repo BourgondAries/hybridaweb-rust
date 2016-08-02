@@ -18,21 +18,22 @@ pub fn enter() {
 
 	let router = req! {
 
-		get "/", myfun: (req, _) => {
+		get "/", myfun: (req, ext) => {
 			msleep(1000);
+			trace![ext.log, "Nice"];
 			Ok(Response::with((status::Ok, views::index(req.log()))))
 		},
 
 		get "/other/:test", kek: (req, _) => {
-			elog!(req).info("other route", b![]);
+			trace![elog!(req), "other route"];
 			msleep(1000);
-			req.log().trace("cool", b!["req" => format!("{:?}", req.extensions.get::<Router>().unwrap().find("test"))]);
+			trace![req.log(), "cool", "req" => format!("{:?}", req.extensions.get::<Router>().unwrap().find("test"))];
 			Ok(Response::with((status::Ok, "Hello World")))
 		},
 
 		get "/*", some: (req, _) => {
 			msleep(1000);
-			elog!(req).warn("Unknown route", b!["req" => format!("{:?}", req)]);
+			warn![elog!(req), "Unknown route", "req" => format!("{:?}", req)];
 			Ok(Response::with((status::Found, Header(
 				headers::Location(
 					"other".to_owned()
@@ -47,8 +48,8 @@ pub fn enter() {
 	let mainlog = log.new(o!["reqid" => "main"]);
 	let worklog = log.new(o![]);
 
-	defer!(mainlog.trace("Clean exit", b![]));
-	mainlog.trace("Constructing middleware", b![]);
+	defer!(trace![mainlog, "Clean exit"]);
+	trace![mainlog, "Constructing middleware"];
 
 	let mut chain = Chain::new(router);
 	chain.link_before(Log::new(worklog));
@@ -61,16 +62,16 @@ pub fn enter() {
 		.mount("/dl/", Static::new(Path::new("dl/")))
 	;
 
-	mainlog.trace("Starting server", b![]);
+	trace![mainlog, "Starting server"];
 	let _ = Iron::new(mount).http("localhost:3000").map_err(|x| {
-		mainlog.error("Unable to start server", b!["error" => format!("{:?}", x)]);
+		error![mainlog, "Unable to start server", "error" => format!("{:?}", x)];
 	});
 }
 
 struct Html;
 impl AfterMiddleware for Html {
 	fn after(&self, req: &mut Request, mut res: Response) -> IronResult<Response> {
-		elog!(req).trace("Setting MIME to html", b![]);
+		trace![elog!(req), "Setting MIME to html"];
 		(Mime(TopLevel::Text, SubLevel::Html, vec![])).modify(&mut res);
 		Ok(res)
 	}
@@ -94,7 +95,7 @@ impl BeforeMiddleware for Log {
 			*count
 		};
 		ins!(req, Log: Arc::new(self.0.new(o!["reqid" => reqid])));
-		elog!(req).trace("Beginning request", b![]);
+		trace![elog!(req), "Beginning request"];
 		Ok(())
 	}
 }
@@ -132,15 +133,15 @@ impl Handler for ResponseTimeHandler {
 		let delta = precise_time_ns() - begin;
 		let conn = Connection::connect("postgresql://postgres:abc@localhost/hybrida", SslMode::None)
 			.map_err(|x| {
-				elog!(req).critical("Unable to connec to db", b!["error" => format!("{:?}", x)]);
+				crit![elog!(req), "Unable to connec to db", "error" => format!("{:?}", x)];
 			});
 		if let Ok(conn) = conn {
 			let _ = conn.transaction();
 		}
 
-		elog!(req).trace("Request time", b![
+		trace!(elog!(req), "Request time",
 			"ms" => delta / 1000 / 1000, "us" => delta / 1000 % 1000, "ns" => delta % 1000
-		]);
+		);
 
 		response
 	}
@@ -166,28 +167,16 @@ fn get_loglevel(env: &str) -> Level {
 }
 
 fn setup_logger(level: Level) -> Logger {
-	let log = Logger::new_root(o!());
-
-	if ! stderr_isatty() {
-		log.set_drain(
-			drain::filter_level(
-				level,
-				drain::async_stream(
-					std::io::stderr(),
-					slog_json::new(),
-				),
-			),
-		);
-		log.trace("Using drain", b!("out" => "stderr", "stderr_isatty" => stderr_isatty(), "type" => "json"));
+	if stderr_isatty() {
+		let log = slog_term::async_stderr().into_logger(o![]);
+		trace!(log, "Using drain", "out" => "stderr", "stderr_isatty" => stderr_isatty(), "type" => "term");
+		log
 	} else {
-		log.set_drain(
-			drain::filter_level(
-				level,
-				slog_term::async_stderr()
-			)
-		);
-		log.trace("Using drain", b!("out" => "stderr", "stderr_isatty" => stderr_isatty(), "type" => "term"));
+		let log = drain::stream(
+			std::io::stderr(),
+			slog_json::new()
+			).into_logger(o![]);
+		trace!(log, "Using drain", "out" => "stderr", "stderr_isatty" => stderr_isatty(), "type" => "json");
+		log
 	}
-	log
 }
-

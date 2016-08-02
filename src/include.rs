@@ -11,6 +11,7 @@ pub use mount::Mount;
 pub use postgres::{Connection, SslMode};
 // pub use scopeguard::guard;
 pub use slog::*;
+pub use slog::drain::IntoLogger;
 pub use slog_json;
 pub use slog_term;
 // pub use std::collections::BTreeMap;

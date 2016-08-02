@@ -1,7 +1,7 @@
 use slog::Logger;
 
 pub fn index(log: &Logger) -> String {
-	log.trace("Generating html", b![]);
+	trace![log, "Generating html"];
 	let mut buffer = String::new();
 	match html! {
 		buffer,
