@@ -30,14 +30,8 @@ macro_rules! req {
 	($($i:ident $e:expr, $n:ident : $r:pat => $b:expr),*) => ({
 		$(
 			let $n = |req: &mut Request| -> IronResult<Response> {
-				struct Total {
-					log: Arc<Logger>,
-				}
-				let info = Total {
-					log: req.extensions.get::<Log>().unwrap().clone()
-				};
 				let ret_val =
-					match (req, info) {
+					match req {
 						$r => $b,
 					};
 				Ok(Response::with((status::Ok, ret_val)))

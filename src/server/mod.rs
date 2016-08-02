@@ -14,24 +14,35 @@ impl<'a, 'b> Db for Request<'a, 'b> {
 	}
 }
 
+// impl typemap::Key for Log { type Value = Arc<Logger>; }
+trait Ext<'a> {
+	fn ext<T: typemap::Key>(&'a self) -> &'a T::Value;
+}
+
+impl<'a, 'b> Ext<'a> for Request<'a, 'b> {
+	fn ext<T: typemap::Key>(&'a self) -> &'a T::Value {
+		self.extensions.get::<T>().unwrap()
+	}
+}
+
 pub fn enter() {
 
 	let router = req! {
 
-		get "/", myfun: (req, ext) => {
+		get "/", myfun: req => {
 			msleep(1000);
-			trace![ext.log, "Nice", "mod" => "over"];
-			views::index(req.log())
+			trace![req.ext::<Log>(), "Nice", "mod" => "over"];
+			views::index(req.ext::<Log>())
 		},
 
-		get "/other/:test", kek: (req, _) => {
+		get "/other/:test", kek: req => {
 			trace![elog!(req), "other route"];
 			msleep(1000);
 			trace![req.log(), "cool", "req" => format!("{:?}", req.extensions.get::<Router>().unwrap().find("test"))];
 			"Hello World"
 		},
 
-		get "/*", some: (req, _) => {
+		get "/*", some: req => {
 			msleep(1000);
 			warn![elog!(req), "Unknown route", "req" => format!("{:?}", req)];
 			/*Ok(Response::with((status::Found, Header(
