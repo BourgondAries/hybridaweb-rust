@@ -10,6 +10,7 @@ pub use isatty::{stderr_isatty};
 pub use mount::Mount;
 pub use postgres::{Connection, SslMode};
 // pub use scopeguard::guard;
+pub use std::rc::Rc;
 pub use slog::*;
 pub use slog::drain::IntoLogger;
 pub use slog_json;

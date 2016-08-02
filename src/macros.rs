@@ -28,24 +28,49 @@ macro_rules! req {
 		req!($($i $e, $n : $r => $b),*)
 	});
 	($($i:ident $e:expr, $n:ident : $r:pat => $b:expr),*) => ({
+		struct Etuor {
+			$(
+				$n: &'static str
+			),*
+		}
+		struct Etuors(Arc<Etuor>);
+		impl typemap::Key for Etuors {
+			type Value = Arc<Etuor>;
+		}
+		impl BeforeMiddleware for Etuors {
+			fn before(&self, req: &mut Request) -> IronResult<()> {
+				ins!(req, Etuors: self.0.clone());
+				Ok(())
+			}
+		}
+		let nak = Etuors(Arc::new(Etuor {
+			$(
+				$n: $e
+			),*
+		}));
 		$(
-			let $n = |req: &mut Request| -> IronResult<Response> {
+		let $n = {
+			|req: &mut Request| -> IronResult<Response> {
 				let log = {
 					req.ext::<Log>().clone()
 				};
-				match match (req, log) {
+				let nak = {
+					req.ext::<Etuors>().clone()
+				};
+				match match (req, log, nak) {
 					$r => $b,
 				} {
 					Re::Html(out) => Ok(Response::with((status::Ok, out))),
 					Re::Redirect(out) => Ok(Response::with((status::Found, Header(headers::Location(out))))),
 				}
-			};
+			}
+		};
 		)*
-		router! {
+		(router! {
 			$(
 				$i $e => $n
 			),*
-		}
+		}, nak)
 	});
 }
 

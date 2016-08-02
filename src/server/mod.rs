@@ -32,26 +32,26 @@ pub enum Re {
 
 pub fn enter() {
 
-	let router = req! {
+	let (router, nak) = req! {
 
-		get "/", myfun: (req, log) => {
+		get "/", myfun: (req, log, nak) => {
 			msleep(1000);
-			trace![log, "Nice", "mod" => "over"];
+			trace![log, "Nice", "linkback" => nak.kek];
 			Re::Html(views::index(req.ext::<Log>()))
 		},
 
-		get "/other/:test", kek: (req, log) => {
+		get "/other/:test", kek: (req, log, nak) => {
 			trace![elog!(req), "other route"];
 			msleep(1000);
 			trace![log, "cool", "req" => format!("{:?}", req.extensions.get::<Router>().unwrap().find("test"))];
 			Re::Html("Hello World".to_owned())
 		},
 
-		get "/*", some: (req, log) => {
+		get "/*", some: (req, log, nak) => {
 			msleep(1000);
 			warn![log, "Unknown route", "req" => format!("{:?}", req)];
 			Re::Redirect("/other/someval".to_owned())
-		},
+		}
 
 	};
 
@@ -64,6 +64,7 @@ pub fn enter() {
 
 	let mut chain = Chain::new(router);
 	chain.link_before(Log::new(worklog));
+	chain.link_before(nak);
 	chain.link_around(ResponseTime);
 	chain.link_after(Html);
 
@@ -89,15 +90,12 @@ impl AfterMiddleware for Html {
 }
 
 struct Log(Arc<Logger>, Mutex<u64>);
-
 impl Log {
 	fn new(log: Logger) -> Log {
 		Log(Arc::new(log), Mutex::new(0))
 	}
 }
-
 impl typemap::Key for Log { type Value = Arc<Logger>; }
-
 impl BeforeMiddleware for Log {
 	fn before(&self, req: &mut Request) -> IronResult<()> {
 		let reqid = {
