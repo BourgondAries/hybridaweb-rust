@@ -20,26 +20,27 @@ pub fn enter() {
 
 		get "/", myfun: (req, ext) => {
 			msleep(1000);
-			trace![ext.log, "Nice"];
-			Ok(Response::with((status::Ok, views::index(req.log()))))
+			trace![ext.log, "Nice", "mod" => "over"];
+			views::index(req.log())
 		},
 
 		get "/other/:test", kek: (req, _) => {
 			trace![elog!(req), "other route"];
 			msleep(1000);
 			trace![req.log(), "cool", "req" => format!("{:?}", req.extensions.get::<Router>().unwrap().find("test"))];
-			Ok(Response::with((status::Ok, "Hello World")))
+			"Hello World"
 		},
 
 		get "/*", some: (req, _) => {
 			msleep(1000);
 			warn![elog!(req), "Unknown route", "req" => format!("{:?}", req)];
-			Ok(Response::with((status::Found, Header(
+			/*Ok(Response::with((status::Found, Header(
 				headers::Location(
 					"other".to_owned()
-
 				)
 			))))
+			*/
+			"Well okay"
 		},
 
 	};
@@ -168,14 +169,31 @@ fn get_loglevel(env: &str) -> Level {
 
 fn setup_logger(level: Level) -> Logger {
 	if stderr_isatty() {
-		let log = slog_term::async_stderr().into_logger(o![]);
+		let log = slog_term::async_stderr()
+		.into_logger(o!["line" => {
+				|rec: &RecordInfo| {
+					rec.line()
+				}
+			}, "mod" => {
+				|rec: &RecordInfo| {
+					rec.module().to_owned()
+				}
+			}]);
 		trace!(log, "Using drain", "out" => "stderr", "stderr_isatty" => stderr_isatty(), "type" => "term");
 		log
 	} else {
 		let log = drain::stream(
-			std::io::stderr(),
-			slog_json::new()
-			).into_logger(o![]);
+				std::io::stderr(),
+				slog_json::new()
+			).into_logger(o!["line" => {
+				|rec: &RecordInfo| {
+					rec.line()
+				}
+			}, "mod" => {
+				|rec: &RecordInfo| {
+					rec.module().to_owned()
+				}
+			}]);
 		trace!(log, "Using drain", "out" => "stderr", "stderr_isatty" => stderr_isatty(), "type" => "json");
 		log
 	}

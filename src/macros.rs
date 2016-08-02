@@ -36,9 +36,11 @@ macro_rules! req {
 				let info = Total {
 					log: req.extensions.get::<Log>().unwrap().clone()
 				};
-				match (req, info) {
-					$r => $b,
-				}
+				let ret_val =
+					match (req, info) {
+						$r => $b,
+					};
+				Ok(Response::with((status::Ok, ret_val)))
 			};
 		)*
 		router! {

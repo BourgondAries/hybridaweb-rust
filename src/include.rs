@@ -14,6 +14,7 @@ pub use slog::*;
 pub use slog::drain::IntoLogger;
 pub use slog_json;
 pub use slog_term;
+pub use slog::logger::IntoMsg;
 // pub use std::collections::BTreeMap;
 pub use staticfile::Static;
 pub use std;
