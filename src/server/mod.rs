@@ -147,8 +147,9 @@ impl typemap::Key for Db {
 }
 impl BeforeMiddleware for Db {
 	fn before(&self, req: &mut Request) -> IronResult<()> {
-		let conn = Connection::connect("postgresql://postgres:abc@localhost/hybrida",
-		                               SslMode::None)
+		let path = "postgresql://postgres:abc@localhost/hybrida";
+		debug![req.ext::<Log>(), "Connecting to database", "path" => path];
+		let conn = Connection::connect(path, SslMode::None)
 			.map_err(|x| {
 				crit![req.ext::<Log>(), "Unable to connec to db", "error" => format!("{:?}", x)];
 			});
