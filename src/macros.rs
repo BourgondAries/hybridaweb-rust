@@ -52,15 +52,9 @@ macro_rules! req {
 		$(
 		let $n = {
 			|req: &mut Request| -> IronResult<Response> {
-				let log = {
-					req.ext::<Log>().clone()
-				};
-				let nak = {
-					req.ext::<RevRoutes>().clone()
-				};
-				let db = {
-					req.ext::<Db>().clone()
-				};
+				let log = req.ext::<Log>().clone();
+				let nak = req.ext::<RevRoutes>().clone();
+				let db = req.ext::<Db>().clone();
 				match match (req, log, nak, db) {
 					$r => $b,
 				} {

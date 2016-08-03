@@ -25,9 +25,9 @@ pub fn enter() {
 
 	let router = req! {
 
-		get "/", myfun: (_, log, nak, _) => {
+		get "/", myfun: (_, log, rev, _) => {
 			msleep(1000);
-			trace![log, "Nice", "linkback" => nak.kek];
+			trace![log, "Nice", "linkback" => rev.kek];
 			Re::Html(views::index(&*log))
 		},
 
