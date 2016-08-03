@@ -25,29 +25,28 @@ pub enum Reply {
 	Html(String),
 	Redirect(String),
 }
-/*
-	let log = setup_logger(get_loglevel("SLOG_LEVEL"));
-	let mainlog = log.new(o!["reqid" => "main"]);
-	let worklog = log.new(o![]);
-
-	defer!(trace![mainlog, "Clean exit"]);
-	trace![mainlog, "Constructing middleware"];
-
-	let mut chain = router;
-	chain.link_before(Log::new(worklog));
-	chain.link_before(Db);
-	chain.link_around(ResponseTime);
-	chain.link_after(Html);
-
-	let mut mount = Mount::new();
-	mount.mount("/", chain)
-		.mount("/dl/", Static::new(Path::new("dl/")));
-
-	trace![mainlog, "Starting server"];
-	let _ = Iron::new(mount).http("localhost:3000").map_err(|x| {
-		error![mainlog, "Unable to start server", "error" => format!("{:?}", x)];
-	});
-*/
+// let log = setup_logger(get_loglevel("SLOG_LEVEL"));
+// let mainlog = log.new(o!["reqid" => "main"]);
+// let worklog = log.new(o![]);
+//
+// defer!(trace![mainlog, "Clean exit"]);
+// trace![mainlog, "Constructing middleware"];
+//
+// let mut chain = router;
+// chain.link_before(Log::new(worklog));
+// chain.link_before(Db);
+// chain.link_around(ResponseTime);
+// chain.link_after(Html);
+//
+// let mut mount = Mount::new();
+// mount.mount("/", chain)
+// .mount("/dl/", Static::new(Path::new("dl/")));
+//
+// trace![mainlog, "Starting server"];
+// let _ = Iron::new(mount).http("localhost:3000").map_err(|x| {
+// error![mainlog, "Unable to start server", "error" => format!("{:?}", x)];
+// });
+//
 
 pub struct Html;
 impl AfterMiddleware for Html {
@@ -55,29 +54,6 @@ impl AfterMiddleware for Html {
 		trace![req.ext::<Log>(), "Setting MIME to html"];
 		(Mime(TopLevel::Text, SubLevel::Html, vec![])).modify(&mut res);
 		Ok(res)
-	}
-}
-
-pub struct Log(Arc<Logger>, Mutex<u64>);
-impl Log {
-	pub fn new(log: Logger) -> Log {
-		Log(Arc::new(log), Mutex::new(0))
-	}
-}
-
-impl typemap::Key for Log {
-	type Value = Arc<Logger>;
-}
-impl BeforeMiddleware for Log {
-	fn before(&self, req: &mut Request) -> IronResult<()> {
-		let reqid = {
-			let mut count = self.1.lock().unwrap();
-			*count = count.wrapping_add(1);
-			*count
-		};
-		req.ins::<Log>(Arc::new(self.0.new(o!["reqid" => reqid])));
-		trace![req.ext::<Log>(), "Beginning request"];
-		Ok(())
 	}
 }
 
@@ -95,46 +71,6 @@ impl BeforeMiddleware for Head {
 			}
 		};
 		req.ins::<Head>(buffer);
-		Ok(())
-	}
-}
-
-struct ResponseTime;
-impl AroundMiddleware for ResponseTime {
-	fn around(self, handler: Box<Handler>) -> Box<Handler> {
-		Box::new(ResponseTimeHandler(handler))
-	}
-}
-
-struct ResponseTimeHandler(Box<Handler>);
-impl Handler for ResponseTimeHandler {
-	fn handle(&self, req: &mut Request) -> IronResult<Response> {
-		let begin = precise_time_ns();
-		let response = self.0.handle(req);
-		let delta = precise_time_ns() - begin;
-
-		trace!(req.ext::<Log>(), "Request time",
-			"ms" => delta / 1000 / 1000, "us" => delta / 1000 % 1000, "ns" => delta % 1000
-		);
-
-		response
-	}
-}
-
-pub struct Db;
-impl typemap::Key for Db {
-	type Value = Rc<Connection>;
-}
-impl BeforeMiddleware for Db {
-	fn before(&self, req: &mut Request) -> IronResult<()> {
-		let path = "postgresql://postgres:abc@localhost/hybrida";
-		debug![req.ext::<Log>(), "Connecting to database", "path" => path];
-		let conn = Connection::connect(path, SslMode::None).map_err(|x| {
-			crit![req.ext::<Log>(), "Unable to connec to db", "error" => format!("{:?}", x)];
-		});
-		if let Ok(conn) = conn {
-			req.ins::<Db>(Rc::new(conn));
-		}
 		Ok(())
 	}
 }

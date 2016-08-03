@@ -6,7 +6,10 @@ macro_rules! hybrid {
 	});
 
 	($($i:ident $e:expr, $n:ident : $r:pat => $b:expr),*) => ({
-		use $crate::server::{Db, Html, Log, Reply};
+		use $crate::Log::*;
+		use $crate::Db::*;
+		use $crate::RespTime::*;
+		use $crate::server::{Html, Reply};
 		use iron::{AfterMiddleware, AroundMiddleware, BeforeMiddleware,
 		           Chain, headers, modifiers, Response, status, typemap};
 		use slog::Logger;
@@ -53,8 +56,8 @@ macro_rules! hybrid {
 		let log = $crate::server::setup_logger($crate::server::get_loglevel("SLOG_LEVEL"));
 		let mainlog = log.new(o!["reqid" => "main"]);
 		let worklog = log.new(o![]);
-		chain.link_before($crate::server::Log::new(worklog));
-		chain.link_before($crate::server::Db);
+		chain.link_before(Log::new(worklog));
+		chain.link_before(Db);
 		chain.link_before(revroutes);
 		chain
 	});
