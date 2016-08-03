@@ -1,3 +1,4 @@
+pub use ::server::Ext;
 pub use iron::mime::*;
 pub use iron::modifier::Modifier;
 pub use iron::headers;
