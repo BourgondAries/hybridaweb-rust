@@ -1,9 +1,9 @@
 use slog::Logger;
 
 pub fn index(log: &Logger) -> String {
-    trace![log, "Generating html"];
-    let mut buffer = String::new();
-    let _ = html! {
+	trace![log, "Generating html"];
+	let mut buffer = String::new();
+	let _ = html! {
 		buffer,
 		html {
 			head {
@@ -16,5 +16,5 @@ pub fn index(log: &Logger) -> String {
 			}
 		}
 	};
-    buffer
+	buffer
 }

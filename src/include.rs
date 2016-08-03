@@ -10,7 +10,7 @@ pub use iron::{AfterMiddleware, AroundMiddleware, BeforeMiddleware, Handler, Url
 pub use isatty::stderr_isatty;
 // pub use itertools::Itertools;
 pub use mount::Mount;
-pub use postgres::{Connection, SslMode};
+pub use postgres::{Connection, GenericConnection, SslMode};
 // pub use scopeguard::guard;
 pub use std::rc::Rc;
 pub use slog::*;
