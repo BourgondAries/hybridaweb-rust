@@ -189,13 +189,17 @@ fn setup_logger(level: Level) -> Logger {
 
 	if stderr_isatty() {
 		let log = drain::filter_level(level, ::slog_term::async_stderr()).into_logger(automatic);
-		trace!(log, "Using drain", "out" => "stderr", "stderr_isatty" => stderr_isatty(), "type" => "term");
+		trace!(log, "Using drain", "out" => "stderr",
+			"stderr_isatty" => stderr_isatty(),
+			"type" => "term");
 		log
 	} else {
 		let log = drain::filter_level(level,
 		                              drain::async_stream(std::io::stderr(), ::slog_json::new()))
 			.into_logger(automatic);
-		trace!(log, "Using drain", "out" => "stderr", "stderr_isatty" => stderr_isatty(), "type" => "json");
+		trace!(log, "Using drain", "out" => "stderr",
+			"stderr_isatty" => stderr_isatty(),
+			"type" => "json");
 		log
 	}
 }
