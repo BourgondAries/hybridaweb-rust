@@ -23,7 +23,7 @@ extern crate slog_term;
 extern crate staticfile;
 extern crate time;
 
-pub mod include;
+pub mod prelude;
 #[macro_use]
 pub mod macros;
 pub mod server;

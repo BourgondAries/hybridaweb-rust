@@ -29,14 +29,14 @@ macro_rules! hybrid {
 			|req: &mut Request| -> IronResult<Response> {
 				#[allow(dead_code)]
 				struct Elements {
-					db: Rc<Connection>,
+					db: Option<Rc<Connection>>,
 					log: Arc<Logger>,
 					rev: Arc<RevRoute>,
 				}
 				let elems = Elements {
+					db: req.extensions.get::<Db>().map(|x| x.clone()),
 					log: req.ext::<Log>().clone(),
 					rev: req.ext::<RevRoutes>().clone(),
-					db: req.ext::<Db>().clone(),
 				};
 				match match (req, elems) {
 					$r => $b,
@@ -50,6 +50,11 @@ macro_rules! hybrid {
 		};
 		)*
 		let mut chain = Chain::new(router! { $( $i $e => $n),* });
+		let log = $crate::server::setup_logger($crate::server::get_loglevel("SLOG_LEVEL"));
+		let mainlog = log.new(o!["reqid" => "main"]);
+		let worklog = log.new(o![]);
+		chain.link_before($crate::server::Log::new(worklog));
+		chain.link_before($crate::server::Db);
 		chain.link_before(revroutes);
 		chain
 	});

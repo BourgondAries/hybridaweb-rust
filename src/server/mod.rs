@@ -1,4 +1,4 @@
-use include::*;
+use prelude::*;
 use std;
 
 mod views;
@@ -25,54 +25,7 @@ pub enum Reply {
 	Html(String),
 	Redirect(String),
 }
-
-pub fn enter() {
-
-	// Define these routes, use 'elm' to access extras. How to add own extras?
-	// Can still use Iron's after/before.
-	// Defaults: Request + Database + RevRoute + Logger
-	// Since a single route handles a 'series' of similar requests, (similar in origin)
-	// We can reasonably assume that we have a "global surrounder" for that route.
-	// router.surroundHtml(|html| {
-	// 	html! {
-	// head {
-	// 	something
-	// } body {
-	// 	^PreEscaped(html)
-	// 	footer here
-	// }
-	// }});
-	//
-	// I like this... anything else that the site needs? Ah, cookies!
-	// Or even user login, given as an Option<User>
-	// What about inserting more BeforeMiddleware after the Db connection?
-	// I'd ideally want to let the user assemble middleware.
-	// Req -> Logger -> Db -> Cookie -> User -> RevRoute -> Handler
-	// Actually we already can! Just use link_before, since it appends!
-	// What about customization of Db, Cookie, etc? Also customizing elm
-
-	let router = hybrid! {
-
-		get "/", myfun: (_, elm) => {
-			msleep(1000);
-			trace![elm.log, "Nice", "linkback" => elm.rev.kek];
-			Reply::Html(views::index(&*elm.log))
-		},
-
-		get "/other/:test", kek: (req, elm) => {
-			msleep(1000);
-			trace![elm.log, "cool", "req" => format!("{:?}", req.ext::<Router>().find("test"))];
-			Reply::Html("Hello World".to_owned())
-		},
-
-		get "/*", some: (req, elm) => {
-			msleep(1000);
-			warn![elm.log, "Unknown route", "req" => format!("{:?}", req)];
-			Reply::Redirect(elm.rev.kek.into())
-		},
-
-	};
-
+/*
 	let log = setup_logger(get_loglevel("SLOG_LEVEL"));
 	let mainlog = log.new(o!["reqid" => "main"]);
 	let worklog = log.new(o![]);
@@ -94,7 +47,7 @@ pub fn enter() {
 	let _ = Iron::new(mount).http("localhost:3000").map_err(|x| {
 		error![mainlog, "Unable to start server", "error" => format!("{:?}", x)];
 	});
-}
+*/
 
 pub struct Html;
 impl AfterMiddleware for Html {
@@ -107,7 +60,7 @@ impl AfterMiddleware for Html {
 
 pub struct Log(Arc<Logger>, Mutex<u64>);
 impl Log {
-	fn new(log: Logger) -> Log {
+	pub fn new(log: Logger) -> Log {
 		Log(Arc::new(log), Mutex::new(0))
 	}
 }
@@ -186,7 +139,7 @@ impl BeforeMiddleware for Db {
 	}
 }
 
-fn get_loglevel(env: &str) -> Level {
+pub fn get_loglevel(env: &str) -> Level {
 	macro_rules! lvlc {
 		($n:expr, $($i:ident),*) => {{
 			match $n {
@@ -203,7 +156,7 @@ fn get_loglevel(env: &str) -> Level {
 	}
 }
 
-fn setup_logger(level: Level) -> Logger {
+pub fn setup_logger(level: Level) -> Logger {
 	let automatic = o!["line" => {
 			|rec: &RecordInfo| {
 				rec.line()
