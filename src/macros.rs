@@ -28,6 +28,7 @@ macro_rules! req {
 		req!($($i $e, $n : $r => $b),*)
 	});
 	($($i:ident $e:expr, $n:ident : $r:pat => $b:expr),*) => ({
+		#[allow(dead_code)]
 		struct RevRoute {
 			$(
 				$n: &'static str
@@ -57,7 +58,10 @@ macro_rules! req {
 				let nak = {
 					req.ext::<RevRoutes>().clone()
 				};
-				match match (req, log, nak) {
+				let db = {
+					req.ext::<Db>().clone()
+				};
+				match match (req, log, nak, db) {
 					$r => $b,
 				} {
 					Re::Html(out) => Ok(Response::with((status::Ok, out))),

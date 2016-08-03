@@ -1,20 +1,11 @@
 use include::*;
+
 mod views;
 
 fn msleep(ms: u64) {
 	sleep(Duration::from_millis(ms));
 }
 
-trait Db {
-	fn log(&self) -> &Arc<Logger>;
-}
-impl<'a, 'b> Db for Request<'a, 'b> {
-	fn log(&self) -> &Arc<Logger> {
-		self.extensions.get::<Log>().unwrap()
-	}
-}
-
-// impl typemap::Key for Log { type Value = Arc<Logger>; }
 trait Ext<'a> {
 	fn ext<T: typemap::Key>(&'a self) -> &'a T::Value;
 }
@@ -34,23 +25,23 @@ pub fn enter() {
 
 	let router = req! {
 
-		get "/", myfun: (_, log, nak) => {
+		get "/", myfun: (_, log, nak, _) => {
 			msleep(1000);
 			trace![log, "Nice", "linkback" => nak.kek];
 			Re::Html(views::index(&*log))
 		},
 
-		get "/other/:test", kek: (req, log, _) => {
+		get "/other/:test", kek: (req, log, _, _) => {
 			msleep(1000);
 			trace![log, "cool", "req" => format!("{:?}", req.ext::<Router>().find("test"))];
 			Re::Html("Hello World".to_owned())
 		},
 
-		get "/*", some: (req, log, _) => {
+		get "/*", some: (req, log, _, _) => {
 			msleep(1000);
 			warn![log, "Unknown route", "req" => format!("{:?}", req)];
 			Re::Redirect("/other/someval".to_owned())
-		}
+		},
 
 	};
 
@@ -63,6 +54,7 @@ pub fn enter() {
 
 	let mut chain = router;
 	chain.link_before(Log::new(worklog));
+	chain.link_before(Db);
 	chain.link_around(ResponseTime);
 	chain.link_after(Html);
 
@@ -93,6 +85,7 @@ impl Log {
 		Log(Arc::new(log), Mutex::new(0))
 	}
 }
+
 impl typemap::Key for Log { type Value = Arc<Logger>; }
 impl BeforeMiddleware for Log {
 	fn before(&self, req: &mut Request) -> IronResult<()> {
@@ -123,8 +116,6 @@ impl BeforeMiddleware for Head {
 	}
 }
 
-struct BodyWrap;
-
 struct ResponseTime;
 impl AroundMiddleware for ResponseTime {
 	fn around(self, handler: Box<Handler>) -> Box<Handler> {
@@ -138,19 +129,27 @@ impl Handler for ResponseTimeHandler {
 		let begin = precise_time_ns();
 		let response = self.0.handle(req);
 		let delta = precise_time_ns() - begin;
-		let conn = Connection::connect("postgresql://postgres:abc@localhost/hybrida", SslMode::None)
-			.map_err(|x| {
-				crit![elog!(req), "Unable to connec to db", "error" => format!("{:?}", x)];
-			});
-		if let Ok(conn) = conn {
-			let _ = conn.transaction();
-		}
 
 		trace!(elog!(req), "Request time",
 			"ms" => delta / 1000 / 1000, "us" => delta / 1000 % 1000, "ns" => delta % 1000
 		);
 
 		response
+	}
+}
+
+struct Db;
+impl typemap::Key for Db { type Value = Rc<Connection>; }
+impl BeforeMiddleware for Db {
+	fn before(&self, req: &mut Request) -> IronResult<()> {
+		let conn = Connection::connect("postgresql://postgres:abc@localhost/hybrida", SslMode::None)
+			.map_err(|x| {
+				crit![elog!(req), "Unable to connec to db", "error" => format!("{:?}", x)];
+			});
+		if let Ok(conn) = conn {
+			ins!(req, Db: Rc::new(conn));
+		}
+		Ok(())
 	}
 }
 
