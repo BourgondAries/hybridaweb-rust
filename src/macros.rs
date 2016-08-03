@@ -18,6 +18,24 @@ macro_rules! hybrid {
 		use std::rc::Rc;
 		use std::sync::Arc;
 
+		type Surrounder = Arc<fn(String) -> String>;
+		struct HybridChain {
+			chain: Chain,
+			surround: Surrounder,
+		}
+
+		impl HybridChain {
+			fn surround(&mut self, sur: Surrounder) {
+				self.surround = sur;
+			}
+		}
+
+		impl Handler for HybridChain {
+			fn handle(&self, req: &mut Request) -> IronResult<Response> {
+				self.chain.handle(req)
+			}
+		}
+
 		#[allow(dead_code)]
 		struct RevRoute { $( $n: &'static str),* }
 		struct RevRoutes(Arc<RevRoute>);
@@ -64,7 +82,10 @@ macro_rules! hybrid {
 		chain.link_after(Htmlize);
 		let mut chain = Chain::new(chain);
 		chain.link_around(RespTime);
-		chain
+		HybridChain {
+			chain: chain,
+			surround: Arc::new(|x: String| -> String { x }),
+		}
 	});
 
 }
