@@ -29,26 +29,16 @@ macro_rules! req {
 	});
 	($($i:ident $e:expr, $n:ident : $r:pat => $b:expr),*) => ({
 		#[allow(dead_code)]
-		struct RevRoute {
-			$(
-				$n: &'static str
-			),*
-		}
+		struct RevRoute { $( $n: &'static str),* }
 		struct RevRoutes(Arc<RevRoute>);
-		impl typemap::Key for RevRoutes {
-			type Value = Arc<RevRoute>;
-		}
+		impl typemap::Key for RevRoutes { type Value = Arc<RevRoute>; }
 		impl BeforeMiddleware for RevRoutes {
 			fn before(&self, req: &mut Request) -> IronResult<()> {
 				ins!(req, RevRoutes: self.0.clone());
 				Ok(())
 			}
 		}
-		let nak = RevRoutes(Arc::new(RevRoute {
-			$(
-				$n: $e
-			),*
-		}));
+		let nak = RevRoutes(Arc::new(RevRoute { $( $n: $e),* }));
 		$(
 		let $n = {
 			|req: &mut Request| -> IronResult<Response> {
@@ -64,13 +54,8 @@ macro_rules! req {
 			}
 		};
 		)*
-		let mut chain = Chain::new(router! {
-			$(
-				$i $e => $n
-			),*
-		});
+		let mut chain = Chain::new(router! { $( $i $e => $n),* });
 		chain.link_before(nak);
 		chain
 	});
 }
-
