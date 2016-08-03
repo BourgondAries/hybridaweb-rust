@@ -3,7 +3,7 @@ use slog::Logger;
 pub fn index(log: &Logger) -> String {
 	trace![log, "Generating html"];
 	let mut buffer = String::new();
-	match html! {
+	let _ = html! {
 		buffer,
 		html {
 			head {
@@ -15,9 +15,6 @@ pub fn index(log: &Logger) -> String {
 				}
 			}
 		}
-	} {
-		Ok(()) => {}
-		Err(_) => {}
-	}
+	};
 	buffer
 }
