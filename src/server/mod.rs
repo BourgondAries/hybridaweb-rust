@@ -24,6 +24,29 @@ pub enum Reply {
 
 pub fn enter() {
 
+	// Define these routes, use 'elm' to access extras. How to add own extras?
+	// Can still use Iron's after/before.
+	// Defaults: Request + Database + RevRoute + Logger
+	// Since a single route handles a 'series' of similar requests, (similar in origin)
+	// We can reasonably assume that we have a "global surrounder" for that route.
+	// router.surroundHtml(|html| {
+	//	html! {
+	// head {
+	// 	something
+	// } body {
+	// 	^PreEscaped(html)
+	// 	footer here
+	// }
+	// }});
+	//
+	// I like this... anything else that the site needs? Ah, cookies!
+	// Or even user login, given as an Option<User>
+	// What about inserting more BeforeMiddleware after the Db connection?
+	// I'd ideally want to let the user assemble middleware.
+	// Req -> Logger -> Db -> Cookie -> User -> RevRoute -> Handler
+	// Actually we already can! Just use link_before, since it appends!
+	// What about customization of Db, Cookie, etc? Also customizing elm
+
 	let router = req! {
 
 		get "/", myfun: (_, elm) => {
@@ -149,10 +172,9 @@ impl BeforeMiddleware for Db {
 	fn before(&self, req: &mut Request) -> IronResult<()> {
 		let path = "postgresql://postgres:abc@localhost/hybrida";
 		debug![req.ext::<Log>(), "Connecting to database", "path" => path];
-		let conn = Connection::connect(path, SslMode::None)
-			.map_err(|x| {
-				crit![req.ext::<Log>(), "Unable to connec to db", "error" => format!("{:?}", x)];
-			});
+		let conn = Connection::connect(path, SslMode::None).map_err(|x| {
+			crit![req.ext::<Log>(), "Unable to connec to db", "error" => format!("{:?}", x)];
+		});
 		if let Ok(conn) = conn {
 			ins!(req, Db: Rc::new(conn));
 		}
@@ -188,19 +210,19 @@ fn setup_logger(level: Level) -> Logger {
 			}
 		}];
 
+	let log;
 	if stderr_isatty() {
-		let log = drain::filter_level(level, ::slog_term::async_stderr()).into_logger(automatic);
+		log = drain::filter_level(level, ::slog_term::async_stderr()).into_logger(automatic);
 		trace!(log, "Using drain", "out" => "stderr",
 			"stderr_isatty" => stderr_isatty(),
 			"type" => "term");
-		log
 	} else {
-		let log = drain::filter_level(level,
+		log = drain::filter_level(level,
 		                              drain::async_stream(std::io::stderr(), ::slog_json::new()))
 			.into_logger(automatic);
 		trace!(log, "Using drain", "out" => "stderr",
 			"stderr_isatty" => stderr_isatty(),
 			"type" => "json");
-		log
 	}
+	log
 }
