@@ -42,14 +42,22 @@ macro_rules! req {
 		$(
 		let $n = {
 			|req: &mut Request| -> IronResult<Response> {
-				let log = req.ext::<Log>().clone();
-				let nak = req.ext::<RevRoutes>().clone();
-				let db = req.ext::<Db>().clone();
-				match match (req, log, nak, db) {
+				#[allow(dead_code)]
+				struct Elements {
+					log: Arc<Logger>,
+					rev: Arc<RevRoute>,
+					db: Rc<Connection>,
+				}
+				let elems = Elements {
+					log: req.ext::<Log>().clone(),
+					rev: req.ext::<RevRoutes>().clone(),
+					db: req.ext::<Db>().clone(),
+				};
+				match match (req, elems) {
 					$r => $b,
 				} {
-					Re::Html(out) => Ok(Response::with((status::Ok, out))),
-					Re::Redirect(out) => Ok(Response::with((status::Found, Header(headers::Location(out))))),
+					Reply::Html(out) => Ok(Response::with((status::Ok, out))),
+					Reply::Redirect(out) => Ok(Response::with((status::Found, Header(headers::Location(out))))),
 				}
 			}
 		};

@@ -1,4 +1,5 @@
 use include::*;
+use std;
 
 mod views;
 
@@ -16,7 +17,7 @@ impl<'a, 'b> Ext<'a> for Request<'a, 'b> {
 	}
 }
 
-pub enum Re {
+pub enum Reply {
 	Html(String),
 	Redirect(String),
 }
@@ -25,22 +26,22 @@ pub fn enter() {
 
 	let router = req! {
 
-		get "/", myfun: (_, log, rev, _) => {
+		get "/", myfun: (_, elm) => {
 			msleep(1000);
-			trace![log, "Nice", "linkback" => rev.kek];
-			Re::Html(views::index(&*log))
+			trace![elm.log, "Nice", "linkback" => elm.rev.kek];
+			Reply::Html(views::index(&*elm.log))
 		},
 
-		get "/other/:test", kek: (req, log, _, _) => {
+		get "/other/:test", kek: (req, elm) => {
 			msleep(1000);
-			trace![log, "cool", "req" => format!("{:?}", req.ext::<Router>().find("test"))];
-			Re::Html("Hello World".to_owned())
+			trace![elm.log, "cool", "req" => format!("{:?}", req.ext::<Router>().find("test"))];
+			Reply::Html("Hello World".to_owned())
 		},
 
-		get "/*", some: (req, log, _, _) => {
+		get "/*", some: (req, elm) => {
 			msleep(1000);
-			warn![log, "Unknown route", "req" => format!("{:?}", req)];
-			Re::Redirect("/other/someval".to_owned())
+			warn![elm.log, "Unknown route", "req" => format!("{:?}", req)];
+			Reply::Redirect("/other/someval".to_owned())
 		},
 
 	};
@@ -107,7 +108,7 @@ impl typemap::Key for Head {
 impl BeforeMiddleware for Head {
 	fn before(&self, req: &mut Request) -> IronResult<()> {
 		let mut buffer = String::new();
-		html! {
+		let _ = html! {
 			buffer,
 			head {
 				meta charset="UTF-8" /
@@ -187,12 +188,12 @@ fn setup_logger(level: Level) -> Logger {
 		}];
 
 	if stderr_isatty() {
-		let log = drain::filter_level(level, slog_term::async_stderr()).into_logger(automatic);
+		let log = drain::filter_level(level, ::slog_term::async_stderr()).into_logger(automatic);
 		trace!(log, "Using drain", "out" => "stderr", "stderr_isatty" => stderr_isatty(), "type" => "term");
 		log
 	} else {
 		let log = drain::filter_level(level,
-		                              drain::async_stream(std::io::stderr(), slog_json::new()))
+		                              drain::async_stream(std::io::stderr(), ::slog_json::new()))
 			.into_logger(automatic);
 		trace!(log, "Using drain", "out" => "stderr", "stderr_isatty" => stderr_isatty(), "type" => "json");
 		log
