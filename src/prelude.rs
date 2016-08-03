@@ -1,4 +1,3 @@
-pub use ::server::Ext;
 pub use iron::mime::*;
 pub use iron::modifier::Modifier;
 pub use iron::headers;
@@ -29,3 +28,4 @@ pub use db::*;
 pub use log::*;
 pub use resptime::*;
 pub use reply::*;
+pub use ext::*;

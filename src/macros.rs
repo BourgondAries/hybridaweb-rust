@@ -7,6 +7,7 @@ macro_rules! hybrid {
 
 	($($i:ident $e:expr, $n:ident : $r:pat => $b:expr),*) => ({
 		use $crate::log::*;
+		use $crate::ext::*;
 		use $crate::db::*;
 		use $crate::reply::*;
 		use $crate::resptime::*;
@@ -54,14 +55,15 @@ macro_rules! hybrid {
 		};
 		)*
 		let mut chain = Chain::new(router! { $( $i $e => $n),* });
-		let log = $crate::server::setup_logger($crate::server::get_loglevel("SLOG_LEVEL"));
+		let log = Log::setup_logger(Log::get_loglevel("SLOG_LEVEL"));
 		let mainlog = log.new(o!["reqid" => "main"]);
 		let worklog = log.new(o![]);
 		chain.link_before(Log::new(worklog));
 		chain.link_before(Db);
 		chain.link_before(revroutes);
-		chain.link_around(RespTime);
 		chain.link_after(Htmlize);
+		let mut chain = Chain::new(chain);
+		chain.link_around(RespTime);
 		chain
 	});
 
