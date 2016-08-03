@@ -6,15 +6,16 @@ macro_rules! hybrid {
 	});
 
 	($($i:ident $e:expr, $n:ident : $r:pat => $b:expr),*) => ({
-		use $crate::Log::*;
-		use $crate::Db::*;
-		use $crate::RespTime::*;
-		use $crate::server::{Html, Reply};
+		use $crate::log::*;
+		use $crate::db::*;
+		use $crate::reply::*;
+		use $crate::resptime::*;
+		use $crate::htmlize::*;
 		use iron::{AfterMiddleware, AroundMiddleware, BeforeMiddleware,
 		           Chain, headers, modifiers, Response, status, typemap};
 		use slog::Logger;
-		use std::sync::Arc;
 		use std::rc::Rc;
+		use std::sync::Arc;
 
 		#[allow(dead_code)]
 		struct RevRoute { $( $n: &'static str),* }
@@ -59,6 +60,8 @@ macro_rules! hybrid {
 		chain.link_before(Log::new(worklog));
 		chain.link_before(Db);
 		chain.link_before(revroutes);
+		chain.link_around(RespTime);
+		chain.link_after(Htmlize);
 		chain
 	});
 

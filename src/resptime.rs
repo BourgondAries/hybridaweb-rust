@@ -1,16 +1,16 @@
 use prelude::*;
 
-struct ResponseTime;
+pub struct RespTime;
 
-impl AroundMiddleware for ResponseTime {
+impl AroundMiddleware for RespTime {
 	fn around(self, handler: Box<Handler>) -> Box<Handler> {
-		Box::new(ResponseTimeHandler(handler))
+		Box::new(RespTimeHandler(handler))
 	}
 }
 
-struct ResponseTimeHandler(Box<Handler>);
+struct RespTimeHandler(Box<Handler>);
 
-impl Handler for ResponseTimeHandler {
+impl Handler for RespTimeHandler {
 	fn handle(&self, req: &mut Request) -> IronResult<Response> {
 		let begin = precise_time_ns();
 		let response = self.0.handle(req);

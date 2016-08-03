@@ -24,9 +24,11 @@ extern crate staticfile;
 extern crate time;
 
 mod ware;
-pub mod Db;
-pub mod Log;
-pub mod RespTime;
+pub mod htmlize;
+pub mod db;
+pub mod reply;
+pub mod log;
+pub mod resptime;
 pub mod prelude;
 #[macro_use]
 pub mod macros;

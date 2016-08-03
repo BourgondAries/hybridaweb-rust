@@ -15,6 +15,7 @@ impl typemap::Key for Log {
 impl BeforeMiddleware for Log {
 	fn before(&self, req: &mut Request) -> IronResult<()> {
 		let reqid = {
+			// TODO: use unwrap_or_else with an RNG
 			let mut count = self.1.lock().unwrap();
 			*count = count.wrapping_add(1);
 			*count
