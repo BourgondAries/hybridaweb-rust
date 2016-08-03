@@ -41,7 +41,7 @@ pub fn enter() {
 		get "/*", some: (req, elm) => {
 			msleep(1000);
 			warn![elm.log, "Unknown route", "req" => format!("{:?}", req)];
-			Reply::Redirect("/other/someval".to_owned())
+			Reply::Redirect(elm.rev.kek.to_owned())
 		},
 
 	};

@@ -38,7 +38,7 @@ macro_rules! req {
 				Ok(())
 			}
 		}
-		let nak = RevRoutes(Arc::new(RevRoute { $( $n: $e),* }));
+		let revroutes = RevRoutes(Arc::new(RevRoute { $( $n: $e),* }));
 		$(
 		let $n = {
 			|req: &mut Request| -> IronResult<Response> {
@@ -63,7 +63,7 @@ macro_rules! req {
 		};
 		)*
 		let mut chain = Chain::new(router! { $( $i $e => $n),* });
-		chain.link_before(nak);
+		chain.link_before(revroutes);
 		chain
 	});
 }
