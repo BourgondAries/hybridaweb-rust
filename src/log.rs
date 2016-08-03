@@ -4,7 +4,6 @@ use std::io;
 pub struct Log(Arc<Logger>, Mutex<u64>);
 
 impl Log {
-
 	pub fn new(log: Logger) -> Log {
 		Log(Arc::new(log), Mutex::new(0))
 	}
@@ -45,8 +44,7 @@ impl Log {
 				"stderr_isatty" => stderr_isatty(),
 				"type" => "term");
 		} else {
-			log = drain::filter_level(level,
-																drain::async_stream(io::stderr(), ::slog_json::new()))
+			log = drain::filter_level(level, drain::async_stream(io::stderr(), ::slog_json::new()))
 				.into_logger(automatic);
 			trace!(log, "Using drain", "out" => "stderr",
 				"stderr_isatty" => stderr_isatty(),

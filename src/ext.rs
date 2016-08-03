@@ -13,5 +13,3 @@ impl<'a, 'b> Ext<'a> for Request<'a, 'b> {
 		self.extensions.insert::<T>(val);
 	}
 }
-
-

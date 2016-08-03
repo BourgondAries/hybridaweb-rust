@@ -9,5 +9,3 @@ impl AfterMiddleware for Htmlize {
 		Ok(res)
 	}
 }
-
-

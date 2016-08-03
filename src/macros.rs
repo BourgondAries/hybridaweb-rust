@@ -82,10 +82,11 @@ macro_rules! hybrid {
 		chain.link_after(Htmlize);
 		let mut chain = Chain::new(chain);
 		chain.link_around(RespTime);
-		HybridChain {
-			chain: chain,
-			surround: Arc::new(|x: String| -> String { x }),
-		}
+		// HybridChain {
+			// chain: chain,
+			// surround: Arc::new(|x: String| -> String { x }),
+		// }
+		chain
 	});
 
 }
