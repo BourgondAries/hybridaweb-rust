@@ -44,9 +44,9 @@ macro_rules! req {
 			|req: &mut Request| -> IronResult<Response> {
 				#[allow(dead_code)]
 				struct Elements {
+					db: Rc<Connection>,
 					log: Arc<Logger>,
 					rev: Arc<RevRoute>,
-					db: Rc<Connection>,
 				}
 				let elems = Elements {
 					log: req.ext::<Log>().clone(),

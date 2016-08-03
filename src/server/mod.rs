@@ -30,7 +30,7 @@ pub fn enter() {
 	// Since a single route handles a 'series' of similar requests, (similar in origin)
 	// We can reasonably assume that we have a "global surrounder" for that route.
 	// router.surroundHtml(|html| {
-	//	html! {
+	// 	html! {
 	// head {
 	// 	something
 	// } body {
@@ -218,7 +218,7 @@ fn setup_logger(level: Level) -> Logger {
 			"type" => "term");
 	} else {
 		log = drain::filter_level(level,
-		                              drain::async_stream(std::io::stderr(), ::slog_json::new()))
+		                          drain::async_stream(std::io::stderr(), ::slog_json::new()))
 			.into_logger(automatic);
 		trace!(log, "Using drain", "out" => "stderr",
 			"stderr_isatty" => stderr_isatty(),
