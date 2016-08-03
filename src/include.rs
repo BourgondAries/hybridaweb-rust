@@ -4,8 +4,9 @@ pub use iron::headers;
 pub use iron::modifiers::Header;
 pub use iron::prelude::*;
 pub use router::Router;
-pub use iron::{BeforeMiddleware, AfterMiddleware, AroundMiddleware, Handler, typemap, status, Url, modifiers};
-pub use isatty::{stderr_isatty};
+pub use iron::{AfterMiddleware, AroundMiddleware, BeforeMiddleware, Handler, Url, modifiers,
+               status, typemap};
+pub use isatty::stderr_isatty;
 // pub use itertools::Itertools;
 pub use mount::Mount;
 pub use postgres::{Connection, SslMode};

@@ -16,8 +16,8 @@ pub fn index(log: &Logger) -> String {
 			}
 		}
 	} {
-		Ok(()) => {},
-		Err(_) => {},
+		Ok(()) => {}
+		Err(_) => {}
 	}
 	buffer
 }
