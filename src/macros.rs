@@ -19,7 +19,7 @@ macro_rules! hybrid {
 		use std::rc::Rc;
 		use std::sync::{Arc, Mutex};
 
-		type Surrounder = Arc<Mutex<RefCell<Box<fn(String) -> String>>>>;
+		type Surrounder = Arc<Mutex<fn(String) -> String>>;
 		struct HybridChain {
 			surround: Surrounder,
 		}
@@ -27,9 +27,8 @@ macro_rules! hybrid {
 		impl HybridChain {
 			fn surround_with(&self, sur: fn(String) -> String) {
 				let x = self.surround.clone();
-				let x = x.lock().unwrap();
-				let mut x = x.borrow_mut();
-				*x = Box::new(sur);
+				let mut x = x.lock().unwrap();
+				*x = sur;
 			}
 		}
 
@@ -68,7 +67,6 @@ macro_rules! hybrid {
 				};
 				let surround = req.ext::<HybridChain>().clone();
 				let surround = surround.lock().unwrap();
-				let surround = surround.borrow();
 				match match (req, elems) {
 					$r => $b,
 				} {
@@ -90,7 +88,7 @@ macro_rules! hybrid {
 		let mut chain = Chain::new(chain);
 		chain.link_around(RespTime);
 		fn default_surround(string: String) -> String { string };
-		let surround = Arc::new(Mutex::new(RefCell::new(Box::new(default_surround as fn(String) -> String))));
+		let surround = Arc::new(Mutex::new(default_surround as fn(String) -> String));
 		let hchain = Arc::new(HybridChain {
 			surround: surround.clone(),
 		});
