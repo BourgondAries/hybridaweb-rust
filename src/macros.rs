@@ -15,24 +15,29 @@ macro_rules! hybrid {
 		use iron::{AfterMiddleware, AroundMiddleware, BeforeMiddleware,
 		           Chain, headers, modifiers, Response, status, typemap};
 		use slog::Logger;
+		use std::cell::RefCell;
 		use std::rc::Rc;
-		use std::sync::Arc;
+		use std::sync::{Arc, Mutex};
 
-		type Surrounder = Arc<fn(String) -> String>;
+		type Surrounder = Arc<Mutex<RefCell<Box<fn(String) -> String>>>>;
 		struct HybridChain {
-			chain: Chain,
 			surround: Surrounder,
 		}
 
 		impl HybridChain {
-			fn surround(&mut self, sur: Surrounder) {
-				self.surround = sur;
+			fn surround_with(&self, sur: fn(String) -> String) {
+				let x = self.surround.clone();
+				let x = x.lock().unwrap();
+				let mut x = x.borrow_mut();
+				*x = Box::new(sur);
 			}
 		}
 
-		impl Handler for HybridChain {
-			fn handle(&self, req: &mut Request) -> IronResult<Response> {
-				self.chain.handle(req)
+		impl typemap::Key for HybridChain { type Value = Surrounder; }
+		impl BeforeMiddleware for HybridChain {
+			fn before(&self, req: &mut Request) -> IronResult<()> {
+				req.ins::<HybridChain>(self.surround.clone());
+				Ok(())
 			}
 		}
 
@@ -61,11 +66,14 @@ macro_rules! hybrid {
 					log: req.ext::<Log>().clone(),
 					rev: req.ext::<RevRoutes>().clone(),
 				};
+				let surround = req.ext::<HybridChain>().clone();
+				let surround = surround.lock().unwrap();
+				let surround = surround.borrow();
 				match match (req, elems) {
 					$r => $b,
 				} {
 					Reply::Html(out)
-						=> Ok(Response::with((status::Ok, out))),
+						=> Ok(Response::with((status::Ok, surround(out)))),
 					Reply::Redirect(out)
 						=> Ok(Response::with((status::Found, modifiers::Header(headers::Location(out))))),
 				}
@@ -82,11 +90,13 @@ macro_rules! hybrid {
 		chain.link_after(Htmlize);
 		let mut chain = Chain::new(chain);
 		chain.link_around(RespTime);
-		// HybridChain {
-			// chain: chain,
-			// surround: Arc::new(|x: String| -> String { x }),
-		// }
-		chain
+		fn default_surround(string: String) -> String { string };
+		let surround = Arc::new(Mutex::new(RefCell::new(Box::new(default_surround as fn(String) -> String))));
+		let hchain = Arc::new(HybridChain {
+			surround: surround.clone(),
+		});
+		chain.link_before(hchain.clone());
+		(chain, hchain)
 	});
 
 }
