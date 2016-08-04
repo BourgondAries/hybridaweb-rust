@@ -12,7 +12,7 @@ macro_rules! hybrid {
 		use $crate::reply::*;
 		use $crate::resptime::*;
 		use $crate::htmlize::*;
-		use iron::{AfterMiddleware, AroundMiddleware, BeforeMiddleware,
+		use iron::{BeforeMiddleware,
 		           Chain, headers, modifiers, Response, status, typemap};
 		use slog::Logger;
 		use std::cell::RefCell;
@@ -82,7 +82,6 @@ macro_rules! hybrid {
 		)*
 		let mut chain = Chain::new(router! { $( $i $e => $n),* });
 		let log = Log::setup_logger(Log::get_loglevel("SLOG_LEVEL"));
-		let mainlog = log.new(o!["reqid" => "main"]);
 		let worklog = log.new(o![]);
 		chain.link_before(Log::new(worklog));
 		chain.link_before(Db);
