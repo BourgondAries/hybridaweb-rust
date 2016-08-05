@@ -15,7 +15,6 @@ macro_rules! hybrid {
 		use iron::{BeforeMiddleware,
 		           Chain, headers, modifiers, Response, status, typemap};
 		use slog::Logger;
-		use std::cell::RefCell;
 		use std::rc::Rc;
 		use std::sync::{Arc, RwLock};
 
