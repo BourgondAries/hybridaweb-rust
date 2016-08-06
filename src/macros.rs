@@ -55,7 +55,11 @@ macro_rules! hybrid {
 		chain.link_before(revroutes);
 		let mut chain = Chain::new(chain);
 		chain.link_around(RespTime);
-		chain
+
+		let mut mount = Mount::new();
+		mount.mount("/", chain)
+			.mount("/file/", Static::new(Path::new("file/")));
+		mount
 	});
 
 }
