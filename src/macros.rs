@@ -57,8 +57,9 @@ macro_rules! hybrid {
 		chain.link_around(RespTime);
 
 		let mut mount = Mount::new();
+		let filepath = "files/";
 		mount.mount("/", chain)
-			.mount("/file/", Static::new(Path::new("file/")));
+			.mount(&("/".to_owned() + filepath), Static::new(Path::new(filepath)));
 		mount
 	});
 
