@@ -24,7 +24,6 @@ extern crate staticfile;
 extern crate time;
 
 mod ware;
-pub mod htmlize;
 pub mod db;
 pub mod reply;
 pub mod ext;

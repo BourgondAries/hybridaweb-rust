@@ -1,43 +1,21 @@
 #[macro_export]
 macro_rules! hybrid {
 
-	($($i:ident $e:expr, $n:ident : $r:pat => $b:expr),*,) => ({
-		hybrid!($($i $e, $n : $r => $b),*)
+	($r:pat | $($i:ident $e:expr, $n:ident => $b:expr),*,) => ({
+		hybrid!($r | $($i $e, $n => $b),*)
 	});
 
-	($($i:ident $e:expr, $n:ident : $r:pat => $b:expr),*) => ({
+	($r:pat | $($i:ident $e:expr, $n:ident => $b:expr),*) => ({
 		use $crate::log::*;
 		use $crate::ext::*;
 		use $crate::db::*;
 		use $crate::reply::*;
 		use $crate::resptime::*;
-		use $crate::htmlize::*;
 		use iron::{BeforeMiddleware,
 		           Chain, headers, modifiers, Response, status, typemap};
 		use slog::Logger;
 		use std::rc::Rc;
 		use std::sync::{Arc, RwLock};
-
-		type Surrounder = Arc<RwLock<fn(String) -> String>>;
-		struct HybridChain {
-			surround: Surrounder,
-		}
-
-		impl HybridChain {
-			fn surround_with(&self, sur: fn(String) -> String) {
-				let x = self.surround.clone();
-				let mut x = x.write().unwrap();
-				*x = sur;
-			}
-		}
-
-		impl typemap::Key for HybridChain { type Value = Surrounder; }
-		impl BeforeMiddleware for HybridChain {
-			fn before(&self, req: &mut Request) -> IronResult<()> {
-				req.ins::<HybridChain>(self.surround.clone());
-				Ok(())
-			}
-		}
 
 		#[allow(dead_code)]
 		struct RevRoute { $( $n: &'static str),* }
@@ -64,15 +42,8 @@ macro_rules! hybrid {
 					log: req.ext::<Log>().clone(),
 					rev: req.ext::<RevRoutes>().clone(),
 				};
-				let surround = req.extensions.remove::<HybridChain>().unwrap();
-				let surround = surround.read().unwrap();
-				match match (req, elems) {
+				match (req, elems) {
 					$r => $b,
-				} {
-					Reply::Html(out)
-						=> Ok(Response::with((status::Ok, surround(out)))),
-					Reply::Redirect(out)
-						=> Ok(Response::with((status::Found, modifiers::Header(headers::Location(out))))),
 				}
 			}
 		};
@@ -83,16 +54,9 @@ macro_rules! hybrid {
 		chain.link_before(Log::new(worklog));
 		chain.link_before(Db);
 		chain.link_before(revroutes);
-		chain.link_after(Htmlize);
 		let mut chain = Chain::new(chain);
 		chain.link_around(RespTime);
-		fn default_surround(string: String) -> String { string };
-		let surround = Arc::new(RwLock::new(default_surround as fn(String) -> String));
-		let hchain = Arc::new(HybridChain {
-			surround: surround.clone(),
-		});
-		chain.link_before(hchain.clone());
-		(chain, hchain)
+		chain
 	});
 
 }
