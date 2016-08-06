@@ -27,5 +27,4 @@ pub use time::precise_time_ns;
 pub use db::*;
 pub use log::*;
 pub use resptime::*;
-pub use reply::*;
 pub use ext::*;

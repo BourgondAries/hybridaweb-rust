@@ -25,7 +25,6 @@ extern crate time;
 
 mod ware;
 pub mod db;
-pub mod reply;
 pub mod ext;
 pub mod log;
 pub mod resptime;

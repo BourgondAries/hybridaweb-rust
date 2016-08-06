@@ -9,13 +9,12 @@ macro_rules! hybrid {
 		use $crate::log::*;
 		use $crate::ext::*;
 		use $crate::db::*;
-		use $crate::reply::*;
 		use $crate::resptime::*;
 		use iron::{BeforeMiddleware,
 		           Chain, headers, modifiers, Response, status, typemap};
 		use slog::Logger;
 		use std::rc::Rc;
-		use std::sync::{Arc, RwLock};
+		use std::sync::Arc;
 
 		#[allow(dead_code)]
 		struct RevRoute { $( $n: &'static str),* }
@@ -38,7 +37,7 @@ macro_rules! hybrid {
 					rev: Arc<RevRoute>,
 				}
 				let elems = Elements {
-					db: req.extensions.get::<Db>().map(|x| x.clone()),
+					db: req.extensions.get::<Db>().cloned(),
 					log: req.ext::<Log>().clone(),
 					rev: req.ext::<RevRoutes>().clone(),
 				};
