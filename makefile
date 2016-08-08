@@ -6,3 +6,5 @@ dev:
 	# bash -c 'SLOG_LEVEL=Trace ./target/debug/hybridaweb'
 fmto:
 	cargo fmt -- --write-mode overwrite
+test:
+	cargo test -- --nocapture
