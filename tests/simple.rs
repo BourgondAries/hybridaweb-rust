@@ -18,11 +18,11 @@ use hybridweb::prelude::*;
 use hyper::client::{Client};
 use std::io::Read;
 
-const standard_server: &'static str = "localhost:3000";
+const STANDARD_SERVER : &'static str = "localhost:3000";
 
 fn checkbody(request: &str, expect_body: &str) {
 	let client = Client::new();
-		let mut response = client.get(&format!["http://{}/{}", standard_server, request]).send().unwrap();
+		let mut response = client.get(&format!["http://{}/{}", STANDARD_SERVER, request]).send().unwrap();
 		let mut string = String::new();
 		let _ = response.read_to_string(&mut string);
 		assert_eq![string, expect_body]
@@ -31,18 +31,18 @@ fn checkbody(request: &str, expect_body: &str) {
 #[test]
 fn main() {
 
-	const control_value: &'static str = "control value";
+	const CONTROL_VALUE: &'static str = "control value";
 
 	let hybrid = hybrid! {
 		(req, elm) |
 		get "/", example_route => {
-			rep![control_value]
+			rep![CONTROL_VALUE]
 		},
 	};
 
-	let mut result = Iron::new(hybrid).http(standard_server);
+	let mut result = Iron::new(hybrid).http(STANDARD_SERVER).unwrap();
 	for _ in 0..10 {
-		checkbody("", control_value);
+		checkbody("", CONTROL_VALUE);
 	}
-	result.map(|ref mut x| x.close());
+	let _ = result.close();
 }
