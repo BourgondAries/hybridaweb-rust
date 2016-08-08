@@ -1,6 +1,6 @@
 pub use iron::mime::*;
 pub use iron::modifier::Modifier;
-pub use iron::headers;
+pub use iron::headers::{self, Cookie, CookiePair};
 pub use iron::modifiers::Header;
 pub use iron::prelude::*;
 pub use router::Router;
@@ -28,3 +28,4 @@ pub use db::*;
 pub use log::*;
 pub use resptime::*;
 pub use ext::*;
+pub use set_cookie::*;

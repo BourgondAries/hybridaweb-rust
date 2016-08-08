@@ -23,11 +23,11 @@ extern crate slog_term;
 extern crate staticfile;
 extern crate time;
 
-mod ware;
 pub mod db;
 pub mod ext;
 pub mod log;
 pub mod resptime;
 pub mod prelude;
+pub mod set_cookie;
 #[macro_use]
 pub mod macros;
