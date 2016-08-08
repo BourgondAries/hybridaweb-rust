@@ -13,12 +13,9 @@ impl SetCookie for IronResult<Response> {
 				}
 			}
 			{
-				if ! resp.headers.has::<Cookie>() {
-					resp.headers.set(
-						Cookie(vec![
-							CookiePair::new(key.to_string(), value.to_string())
-						])
-					);
+				if !resp.headers.has::<Cookie>() {
+					resp.headers
+						.set(Cookie(vec![CookiePair::new(key.to_string(), value.to_string())]));
 				}
 			}
 		}
