@@ -28,6 +28,10 @@ fn checkbody(request: &str, expect_body: &str) {
 		assert_eq![string, expect_body]
 }
 
+macro_rules! revroute {
+	($($e:expr; $i:ident);*) => ({});
+}
+
 #[test]
 fn main() {
 
