@@ -29,11 +29,32 @@ fn checkbody(request: &str, expect_body: &str) {
 }
 
 macro_rules! revroute {
-	($($e:expr; $i:ident);*) => ({});
+	($e:expr) => ({
+		$e
+	});
+	($e:expr; $i:ident) => ({
+		#[allow(non_camel_case_types)]
+		mod revroute {
+			pub struct $i;
+			impl $i {
+				pub fn route(&self) -> String {
+					format!("{}/:{}", $e, stringify![$i])
+				}
+				pub fn $i(&self, string: &str) -> String {
+					format!("{}/{}", $e, string)
+				}
+			}
+		}
+		revroute::$i
+	});
 }
 
 #[test]
 fn main() {
+
+	let rev = revroute!["control"; user];
+	println!("{}", rev.user("kek"));
+	println!("{}", rev.route());
 
 	const CONTROL_VALUE: &'static str = "control value";
 
