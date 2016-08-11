@@ -60,8 +60,8 @@ fn main() {
 
 	let temp = revroute!["control"; user];
 	println!["{}", temp.encode("something")];
-	let temp = revroute!["control"; seonc];
-	println!["{}", temp.encode("something completely different")];
+	let temp = revroute!["control"; seonc; "were"; jaja];
+	println!["{}", temp.encode("something completely different", "in control")];
 
 	const CONTROL_VALUE: &'static str = "control value";
 
