@@ -41,9 +41,13 @@ macro_rules! revroute {
 				)*
 				string
 			}
-			pub fn encode<T: ToString>(&self, $($i: T),*) -> String {
+			#[allow(non_camel_case_types)]
+			pub fn link<$($i: ToString),*>(&self, $($i: $i),*) -> String {
 				let mut string = String::new();
 				$(
+					if $e.len() != 0 {
+						string += "/";
+					}
 					string += $e;
 					string += "/";
 					string += $i.to_string().as_ref();
@@ -59,9 +63,11 @@ macro_rules! revroute {
 fn main() {
 
 	let temp = revroute!["control"; user];
-	println!["{}", temp.encode("something")];
-	let temp = revroute!["control"; seonc; "were"; jaja];
-	println!["{}", temp.encode("something completely different", "in control")];
+	println!["{}", temp.link("something")];
+	let temp = revroute!["user"; uid; "nice"; friendid];
+	println!["{}", temp.link("kevinrs", 39)];
+	let temp = revroute!["user"; uid; ""; friendid];
+	println!["{}", temp.link("kevinrs", 39)];
 
 	const CONTROL_VALUE: &'static str = "control value";
 
