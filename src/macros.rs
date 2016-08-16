@@ -1,6 +1,8 @@
 #[macro_export]
 macro_rules! hybrid {
 
+	// Really need procedural macros for this, especially
+	// in regards to compile-time checked reverse routes
 	($r:pat | $($i:ident $e:expr, $n:ident => $b:expr),*,) => ({
 		hybrid!($r | $($i $e, $n => $b),*)
 	});
